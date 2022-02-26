@@ -9,11 +9,9 @@ class RequestCore:
         self.data = None
         self.timeout = 2
         self.proxy = {}
-        http_proxy = os.environ.get("HTTP_PROXY")
-        if http_proxy:
+        if http_proxy := os.environ.get("HTTP_PROXY"):
             self.proxy["http://"] = http_proxy
-        https_proxy = os.environ.get("HTTPS_PROXY")
-        if https_proxy:
+        if https_proxy := os.environ.get("HTTPS_PROXY"):
             self.proxy["https://"] = https_proxy
 
     def syncPostRequest(self) -> httpx.Response:

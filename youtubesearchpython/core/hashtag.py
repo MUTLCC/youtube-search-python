@@ -56,7 +56,7 @@ class HashtagCore(ComponentHandler):
 
     def _getParams(self) -> None:
         requestBody = copy.deepcopy(requestPayload)
-        requestBody['query'] = "#" + self.hashtag
+        requestBody['query'] = f"#{self.hashtag}"
         requestBody['client'] = {
             'hl': self.language,
             'gl': self.region,
@@ -85,7 +85,7 @@ class HashtagCore(ComponentHandler):
 
     async def _asyncGetParams(self) -> None:
         requestBody = copy.deepcopy(requestPayload)
-        requestBody['query'] = "#" + self.hashtag
+        requestBody['query'] = f"#{self.hashtag}"
         requestBody['client'] = {
             'hl': self.language,
             'gl': self.region,
@@ -113,7 +113,7 @@ class HashtagCore(ComponentHandler):
                 return
 
     def _makeRequest(self) -> None:
-        if self.params == None:
+        if self.params is None:
             return
         requestBody = copy.deepcopy(requestPayload)
         requestBody['browseId'] = hashtagBrowseKey
@@ -142,7 +142,7 @@ class HashtagCore(ComponentHandler):
             raise Exception('ERROR: Could not make request.')
 
     async def _asyncMakeRequest(self) -> None:
-        if self.params == None:
+        if self.params is None:
             return
         requestBody = copy.deepcopy(requestPayload)
         requestBody['browseId'] = hashtagBrowseKey
@@ -171,7 +171,7 @@ class HashtagCore(ComponentHandler):
             raise Exception('ERROR: Could not make request.')
 
     def _getComponents(self) -> None:
-        if self.response == None:
+        if self.response is None:
             return
         self.resultComponents = []
         try:

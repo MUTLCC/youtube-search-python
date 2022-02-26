@@ -145,16 +145,15 @@ class ComponentHandler:
     def _getValue(self, source: dict, path: List[str]) -> Union[str, int, dict, None]:
         value = source
         for key in path:
-            if type(key) is str:
-                if key in value.keys():
-                    value = value[key]
-                else:
-                    value = None
-                    break
-            elif type(key) is int:
-                if len(value) != 0:
-                    value = value[key]
-                else:
-                    value = None
-                    break
+            if (
+                type(key) is str
+                and key in value
+                or type(key) is not str
+                and type(key) is int
+                and value
+            ):
+                value = value[key]
+            elif type(key) is str or type(key) is int:
+                value = None
+                break
         return value

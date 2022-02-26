@@ -20,13 +20,14 @@ class LegacyComponentHandler(RequestHandler, ComponentHandler):
         video = element[videoElementKey]
         videoId = self.__getValue(video, ['videoId'])
         viewCount = 0
-        thumbnails = []
         for character in self.__getValue(video, ['viewCountText', 'simpleText']):
             if character.isnumeric():
                 viewCount = viewCount * 10 + int(character)
         modes = ['default', 'hqdefault', 'mqdefault', 'sddefault', 'maxresdefault']
-        for mode in modes:
-            thumbnails.append('https://img.youtube.com/vi/' + videoId + '/' + mode + '.jpg')
+        thumbnails = [
+            f'https://img.youtube.com/vi/{videoId}/{mode}.jpg' for mode in modes
+        ]
+
         component = {
             'index':                          self.index,
             'id':                             videoId,
@@ -47,10 +48,12 @@ class LegacyComponentHandler(RequestHandler, ComponentHandler):
         playlist = element[playlistElementKey]
         playlistId = self.__getValue(playlist, ['playlistId'])
         thumbnailVideoId = self.__getValue(playlist, ['navigationEndpoint', 'watchEndpoint', 'videoId'])
-        thumbnails = []
         modes = ['default', 'hqdefault', 'mqdefault', 'sddefault', 'maxresdefault']
-        for mode in modes:
-            thumbnails.append('https://img.youtube.com/vi/' + thumbnailVideoId + '/' + mode + '.jpg')
+        thumbnails = [
+            f'https://img.youtube.com/vi/{thumbnailVideoId}/{mode}.jpg'
+            for mode in modes
+        ]
+
         component = {
             'index':                          self.index,
             'id':                             playlistId,
@@ -74,18 +77,17 @@ class LegacyComponentHandler(RequestHandler, ComponentHandler):
     def __getValue(self, component: dict, path: List[str]) -> Union[str, int, dict]:
         value = component
         for key in path:
-            if type(key) is str:
-                if key in value.keys():
-                    value = value[key]
-                else:
-                    value = 'LIVE'
-                    break
-            elif type(key) is int:
-                if len(value) != 0:
-                    value = value[key]
-                else:
-                    value = 'LIVE'
-                    break
+            if (
+                type(key) is str
+                and key in value
+                or type(key) is not str
+                and type(key) is int
+                and value
+            ):
+                value = value[key]
+            elif type(key) is str or type(key) is int:
+                value = 'LIVE'
+                break
         return value
 
 class LegacySearchInternal(LegacyComponentHandler):
@@ -111,19 +113,16 @@ class LegacySearchInternal(LegacyComponentHandler):
         '''
         if self.exception or len(self.resultComponents) == 0:
             return None
-        else:
-            if self.mode == 'dict':
-                return {'search_result': self.resultComponents}
-            elif self.mode == 'json':
-                return json.dumps({'search_result': self.resultComponents}, indent = 4)
-            elif self.mode == 'list':
-                result = []
-                for component in self.resultComponents:
-                    listComponent = []
-                    for key in component.keys():
-                        listComponent.append(component[key])
-                    result.append(listComponent)
-                return result
+        if self.mode == 'dict':
+            return {'search_result': self.resultComponents}
+        elif self.mode == 'json':
+            return json.dumps({'search_result': self.resultComponents}, indent = 4)
+        elif self.mode == 'list':
+            result = []
+            for component in self.resultComponents:
+                listComponent = [component[key] for key in component.keys()]
+                result.append(listComponent)
+            return result
 
 
 class SearchVideos(LegacySearchInternal):
@@ -180,8 +179,13 @@ class SearchVideos(LegacySearchInternal):
             if videoElementKey in element.keys():
                 self.resultComponents.append(self._getVideoComponent(element))
             if shelfElementKey in element.keys():
-                for shelfElement in self._getShelfComponent(element)['elements']:
-                    self.resultComponents.append(self._getVideoComponent(shelfElement))
+                self.resultComponents.extend(
+                    self._getVideoComponent(shelfElement)
+                    for shelfElement in self._getShelfComponent(element)[
+                        'elements'
+                    ]
+                )
+
             if len(self.resultComponents) >= self.limit:
                 break
 

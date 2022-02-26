@@ -87,7 +87,7 @@ class PlaylistCore(RequestCore):
         self.url = 'https://www.youtube.com/youtubei/v1/browse' + '?' + urlencode({
             'key': searchKey,
         })
-        browseId = "VL" + id if not id.startswith("VL") else id
+        browseId = f"VL{id}" if not id.startswith("VL") else id
         self.data = {
             "browseId": browseId,
         }
@@ -220,7 +220,7 @@ class PlaylistCore(RequestCore):
 
     def __getPlaylistComponent(self, element: dict, mode: str) -> dict:
         playlistComponent = {}
-        if mode in ['getInfo', None]:
+        if mode in {'getInfo', None}:
             for infoElement in element['info']:
                 if playlistPrimaryInfoKey in infoElement.keys():
                     component = {
@@ -258,7 +258,7 @@ class PlaylistCore(RequestCore):
                     }
                     component['channel']['link'] = 'https://www.youtube.com/channel/' + component['channel']['id']
                     playlistComponent.update(component)
-        if mode in ['getVideos', None]:
+        if mode in {'getVideos', None}:
             self.continuationKey = None
             playlistComponent['videos'] = []
             for videoElement in element['videos']:
@@ -302,18 +302,17 @@ class PlaylistCore(RequestCore):
     def __getValue(self, source: dict, path: Iterable[str]) -> Union[str, int, dict, None]:
         value = source
         for key in path:
-            if type(key) is str:
-                if key in value.keys():
-                    value = value[key]
-                else:
-                    value = None
-                    break
-            elif type(key) is int:
-                if len(value) != 0:
-                    value = value[key]
-                else:
-                    value = None
-                    break
+            if (
+                type(key) is str
+                and key in value
+                or type(key) is not str
+                and type(key) is int
+                and value
+            ):
+                value = value[key]
+            elif type(key) is str or type(key) is int:
+                value = None
+                break
         return value
 
     def __getAllWithKey(self, source: Iterable[Mapping[K, T]], key: K) -> Iterable[T]:
@@ -341,7 +340,4 @@ class PlaylistCore(RequestCore):
 
     def __getFirstValue(self, source: dict, path: Iterable[str]) -> Union[str, int, dict, None]:
         values = self.__getValueEx(source, list(path))
-        for val in values:
-            if val is not None:
-                return val
-        return None
+        return next((val for val in values if val is not None), None)
