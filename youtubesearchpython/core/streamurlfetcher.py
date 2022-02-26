@@ -54,11 +54,11 @@ class StreamURLFetcherCore(RequestCore):
             vc = VideoCore(self.video_id, None, ResultMode.dict, None, False, overridedClient="ANDROID_EMBED")
             vc.sync_create()
             videoFormats = vc.result
-            if not videoFormats["streamingData"]:
-                # Video is:
-                # 1. Either age-restricted on so called level 3
-                # 2. Needs payment (is only for users that use so called "Join feature")
-                raise Exception("streamingData is not present in Video.get. This is most likely a age-restricted video")
+        if not videoFormats["streamingData"]:
+            # Video is:
+            # 1. Either age-restricted on so called level 3
+            # 2. Needs payment (is only for users that use so called "Join feature")
+            raise Exception("streamingData is not present in Video.get. This is most likely a age-restricted video")
         # We deepcopy a list, otherwise it would duplicate
         # See https://github.com/alexmercerind/youtube-search-python/pull/155#discussion_r790165920
         self._player_response = copy.deepcopy(videoFormats["streamingData"]["formats"])
@@ -123,7 +123,7 @@ class StreamURLFetcherCore(RequestCore):
                         continue
                     signature = self.ytie._decrypt_signature(sc['s'][0], self.video_id, self._js_url)
                     sp = try_get(sc, lambda x: x['sp'][0]) or 'signature'
-                    fmt_url += '&' + sp + '=' + signature
+                    fmt_url += f'&{sp}={signature}'
 
                     # Some magic to unthrottle streams
                     # Source: https://github.com/yt-dlp/yt-dlp/blob/master/yt_dlp/extractor/youtube.py#L2983-L2993

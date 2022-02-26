@@ -53,8 +53,11 @@ class SuggestionsCore(RequestCore):
         self.__parseSource()
         for element in self.responseSource:
             if type(element) is list:
-                for searchSuggestionElement in element:
-                    searchSuggestions.append(searchSuggestionElement[0])
+                searchSuggestions.extend(
+                    searchSuggestionElement[0]
+                    for searchSuggestionElement in element
+                )
+
                 break
         if mode == ResultMode.dict:
             return {'result': searchSuggestions}

@@ -76,12 +76,11 @@ class CommentsCore(RequestCore):
     def sync_make_continuation_request(self):
         self.prepare_continuation_request()
         self.response = self.syncPostRequest()
-        if self.response.status_code == 200:
-            self.parse_continuation_source()
-            if not self.continuationKey:
-                raise Exception("Could not retrieve continuation token")
-        else:
+        if self.response.status_code != 200:
             raise Exception("Status code is not 200")
+        self.parse_continuation_source()
+        if not self.continuationKey:
+            raise Exception("Could not retrieve continuation token")
 
     async def async_make_comment_request(self):
         self.prepare_comments_request()
@@ -92,12 +91,11 @@ class CommentsCore(RequestCore):
     async def async_make_continuation_request(self):
         self.prepare_continuation_request()
         self.response = await self.asyncPostRequest()
-        if self.response.status_code == 200:
-            self.parse_continuation_source()
-            if not self.continuationKey:
-                raise Exception("Could not retrieve continuation token")
-        else:
+        if self.response.status_code != 200:
             raise Exception("Status code is not 200")
+        self.parse_continuation_source()
+        if not self.continuationKey:
+            raise Exception("Could not retrieve continuation token")
 
     def sync_create(self):
         self.sync_make_continuation_request()
@@ -159,18 +157,17 @@ class CommentsCore(RequestCore):
     def __getValue(self, source: dict, path: Iterable[str]) -> Union[str, int, dict, None]:
         value = source
         for key in path:
-            if type(key) is str:
-                if key in value.keys():
-                    value = value[key]
-                else:
-                    value = None
-                    break
-            elif type(key) is int:
-                if len(value) != 0:
-                    value = value[key]
-                else:
-                    value = None
-                    break
+            if (
+                type(key) is str
+                and key in value
+                or type(key) is not str
+                and type(key) is int
+                and value
+            ):
+                value = value[key]
+            elif type(key) is str or type(key) is int:
+                value = None
+                break
         return value
 
     def __getAllWithKey(self, source: Iterable[Mapping[K, T]], key: K) -> Iterable[T]:
@@ -198,7 +195,4 @@ class CommentsCore(RequestCore):
 
     def __getFirstValue(self, source: dict, path: Iterable[str]) -> Union[str, int, dict, None]:
         values = self.__getValueEx(source, list(path))
-        for val in values:
-            if val is not None:
-                return val
-        return None
+        return next((val for val in values if val is not None), None)
